@@ -1,5 +1,6 @@
 "use client";
 
+import { Sheet } from "lucide-react";
 import {
   ResetInputRows,
   onKeyDown,
@@ -22,6 +23,7 @@ import { SubmitChat } from "@/features/ui/chat/chat-input-area/submit-chat";
 import React, { useRef } from "react";
 import { chatStore, useChat } from "../chat-store";
 import { fileStore, useFileStore } from "./file/file-store";
+import { csvFileStore, useCsvFileStore } from "./file/csv-file-store";
 import { PromptSlider } from "./prompt/prompt-slider";
 import {
   speechToTextStore,
@@ -35,12 +37,15 @@ import {
 export const ChatInput = () => {
   const { loading, input, chatThreadId } = useChat();
   const { uploadButtonLabel } = useFileStore();
+  const { uploadButtonLabel: csvUploadButtonLabel } = useCsvFileStore();
   const { isPlaying } = useTextToSpeech();
   const { isMicrophoneReady } = useSpeechToText();
   const { rows } = useChatInputDynamicHeight();
 
   const submitButton = React.useRef<HTMLButtonElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+
+  const [isUploadingCsv, setIsUploading] = React.useState(false);
 
   const submit = () => {
     if (formRef.current) {
@@ -55,7 +60,7 @@ export const ChatInput = () => {
         e.preventDefault();
         chatStore.submitChat(e);
       }}
-      status={uploadButtonLabel}
+      status={uploadButtonLabel || csvUploadButtonLabel}
     >
       <ChatTextInput
         onBlur={(e) => {
@@ -77,6 +82,25 @@ export const ChatInput = () => {
       />
       <ChatInputActionArea>
         <ChatInputSecondaryActionArea>
+          {/** Upload CSV file to defined service. */}
+          <AttachFile
+            onClick={(formData) => {
+              if (isUploadingCsv) {
+                return;
+              }
+              setIsUploading(true);
+              csvFileStore.onFileChange({
+                formData,
+                chatThreadId,
+                completionFn: () => {
+                  setIsUploading(false);
+                },
+              });
+            }}
+            icon={<Sheet size={16} />}
+            formDataField="uploaded_file"
+          />
+          {/** Default file upload to Azure Document Intelligence. */}
           <AttachFile
             onClick={(formData) =>
               fileStore.onFileChange({ formData, chatThreadId })

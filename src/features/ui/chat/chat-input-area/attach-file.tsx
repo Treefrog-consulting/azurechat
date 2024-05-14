@@ -2,8 +2,16 @@ import { Paperclip } from "lucide-react";
 import { useRef } from "react";
 import { Button } from "../../button";
 
-export const AttachFile = (props: {
+interface AttachFileProps {
   onClick: (formData: FormData) => void;
+  icon?: React.ReactNode;
+  formDataField?: string;
+}
+
+export const AttachFile: React.FC<AttachFileProps> = ({
+  onClick,
+  icon = <Paperclip size={16} />,
+  formDataField = "file",
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -17,8 +25,8 @@ export const AttachFile = (props: {
     const file = event.target.files?.[0];
     if (file) {
       const formData = new FormData();
-      formData.append("file", file);
-      props.onClick(formData);
+      formData.append(formDataField, file);
+      onClick(formData);
       event.target.value = "";
     }
   };
@@ -26,7 +34,7 @@ export const AttachFile = (props: {
   return (
     <>
       <Button size="icon" variant={"ghost"} onClick={handleClick} type="button" aria-label="Attach file to chat">
-        <Paperclip size={16} />
+        {icon}
       </Button>
       {/* This file input is hidden, and opens when the Button is clicked */}
       <input
